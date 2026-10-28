@@ -31,7 +31,7 @@ If no prompt appears or registration is rejected, confirm the TV and watcher hos
 
 ## Docker Compose — UGREEN NAS / Synology-style layout
 
-This service publishes **no ports**. It makes outbound SSAP connections to the TV over one dedicated Docker bridge network. Create the expected NAS config directory, copy this `homewatch/` folder to your deployment host, then from the copied folder:
+This service publishes **no ports**. It makes outbound SSAP connections to the TV over one dedicated Docker bridge network. `DATA_DIR` defaults to the UGREEN path below; set it in `.env` to an absolute persistent directory on other hosts. Copy this `homewatch/` folder to the deployment host, then from that folder:
 
 ```bash
 mkdir -p /volume2/docker/omarchytv-homewatch
@@ -45,7 +45,7 @@ chown -R 1000:1000 /volume2/docker/omarchytv-homewatch
 cp .env.example .env
 ```
 
-Edit `.env` and set `TV_IP` to the TV's reserved/static LAN address. `PUID=1000` is the default; make the bind-mounted directory writable by UID 1000 so the paired client key can be saved.
+Edit `.env` and set `TV_IP` to the TV's reserved/static LAN address. On non-UGREEN hosts, set `DATA_DIR` to an absolute persistent directory; set `PUID`/`PGID` if UID/GID 1000 is not appropriate. Create that directory and make it writable by the selected UID/GID.
 
 ```bash
 docker compose up -d --build
@@ -65,9 +65,9 @@ Stopping the service immediately returns Home handling to LG's stock behavior. T
 
 ### Portainer Stack deployment
 
-Yes—if the UGREEN NAS is your always-on Docker host, deploy this as a **Portainer Stack**. The Compose file is Git-stack friendly: set `TV_IP` as a required Stack environment variable, and optionally override the other variables listed below. Use repository compose path `homewatch/docker-compose.yml`; the Docker build context is the `homewatch/` directory. Ensure `/volume2/docker/omarchytv-homewatch` exists on the NAS and is writable by UID 1000. No ports need to be published.
+Yes—if the UGREEN NAS is your always-on Docker host, deploy this as a **Portainer Stack**. Set `TV_IP` as a required Stack environment variable; `DATA_DIR` defaults to `/volume2/docker/omarchytv-homewatch` and can be overridden for other hosts. `PUID` and `PGID` default to `1000`. Use repository compose path `homewatch/docker-compose.yml`; the Docker build context is the `homewatch/` directory. Ensure `DATA_DIR` exists and is writable by the selected UID/GID. No ports need to be published.
 
-This checkout's changes are local until committed and pushed to your fork. For Portainer's Git deployment flow, the fork must contain the `homewatch/` files first. Alternatively, copy the folder to the NAS and run `docker compose up -d --build` from that directory.
+For Portainer's Git deployment flow, the selected repository branch must contain the `homewatch/` files. Alternatively, copy the folder to the NAS and run `docker compose up -d --build` from that directory.
 
 ## Raspberry Pi systemd option
 
@@ -85,7 +85,7 @@ sudo /opt/omarchytv-homewatch/.venv/bin/pip install -r /opt/omarchytv-homewatch/
 sudo chown -R root:root /opt/omarchytv-homewatch
 ```
 
-Create `/etc/omarchytv-homewatch.env` with at least the TV address; use the same optional variables as `.env.example` (the unit sets `STATE_FILE` under `/var/lib`):
+Create `/etc/omarchytv-homewatch.env` with at least the TV address and any watcher variables you need (for example `TARGET_APP_ID`, `HOME_APP_IDS`, `SCREENSAVER_APP_IDS`, `ESCAPE_WINDOW_SEC`, or `SSAP_URL`). The unit sets `STATE_FILE` under `/var/lib`; Docker-only `DATA_DIR`, `PUID`, and `PGID` are not used by systemd.
 
 ```ini
 TV_IP=192.168.1.50
@@ -121,6 +121,9 @@ sudo systemctl disable --now omarchytv-homewatch.service
 | Variable | Default | Meaning |
 |---|---|---|
 | `TV_IP` | required | TV LAN IPv4 address or hostname. |
+| `DATA_DIR` | `/volume2/docker/omarchytv-homewatch` | Host directory bind-mounted at `/data` for the persistent SSAP client key; set an absolute path for other Docker hosts. |
+| `PUID` | `1000` | Container user ID; ensure `DATA_DIR` is writable by this ID. |
+| `PGID` | `1000` | Container group ID; ensure `DATA_DIR` is writable by this group. |
 | `TARGET_APP_ID` | `com.omarchytv.home` | App launched when LG Home surfaces. |
 | `HOME_APP_IDS` | `com.webos.app.home,com.webos.launcher` | Comma-separated foreground app ids treated as LG Home. |
 | `SCREENSAVER_APP_IDS` | `com.webos.app.screensaver,com.webos.screensaver` | Comma-separated screensaver app ids to ignore. Power-state detection also suppresses redirects. |

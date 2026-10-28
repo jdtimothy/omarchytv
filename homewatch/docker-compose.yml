@@ -3,7 +3,7 @@ services:
     build: .
     container_name: omarchytv-homewatch
     restart: unless-stopped
-    user: "${PUID:-1000}:1000"
+    user: "${PUID:-1000}:${PGID:-1000}"
     environment:
       TV_IP: "${TV_IP:?TV_IP must be set in the stack environment}"
       TARGET_APP_ID: "${TARGET_APP_ID:-com.omarchytv.home}"
@@ -13,8 +13,9 @@ services:
       SSAP_URL: "${SSAP_URL:-}"
       STATE_FILE: /data/client-key.json
       PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
     volumes:
-      - /volume2/docker/omarchytv-homewatch:/data
+      - "${DATA_DIR:-/volume2/docker/omarchytv-homewatch}:/data"
     networks:
       - homewatch
 
