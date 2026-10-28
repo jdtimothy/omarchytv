@@ -21,7 +21,7 @@ POWER_URI = "ssap://com.webos.service.tvpower/power/getPowerState"
 LAUNCH_URI = "ssap://system.launcher/launch"
 DEFAULT_HOME_APP_IDS = frozenset({"com.webos.app.home", "com.webos.launcher"})
 DEFAULT_SCREENSAVER_APP_IDS = frozenset({"com.webos.app.screensaver", "com.webos.screensaver"})
-HOME_EVENT_DEBOUNCE_SEC = 1.0
+REDIRECT_DEBOUNCE_SEC = 1.0
 LOG = logging.getLogger("homewatch")
 
 
@@ -31,7 +31,6 @@ class WatchConfig:
     target_app_id: str = "com.omarchytv.home"
     home_app_ids: frozenset[str] = DEFAULT_HOME_APP_IDS
     screensaver_app_ids: frozenset[str] = DEFAULT_SCREENSAVER_APP_IDS
-    escape_window_sec: float = 3.0
     state_file: Path = Path("/data/client-key.json")
     uri: str | None = None
     reconnect_initial_sec: float = 2.0
@@ -48,16 +47,15 @@ class WatchConfig:
 
 
 class HomeWatcher:
-    """Maintain one SSAP session and apply Home/escape-hatch policy."""
+    """Maintain one SSAP session and redirect LG Home to the target app."""
 
     def __init__(self, config: WatchConfig) -> None:
         self.config = config
         self.client_key: str | None = self._load_client_key()
         self.current_app_id: str | None = None
         self.power_state: str | None = None
-        self.escaped = False
         self.pending_home = False
-        self._home_hits: list[float] = []
+        self.last_redirect_at: float | None = None
         self._request_id = 0
 
     def _load_client_key(self) -> str | None:
@@ -162,9 +160,8 @@ class HomeWatcher:
         # A fresh session must obtain power state before the foreground snapshot.
         self.current_app_id = None
         self.power_state = None
-        self.escaped = False
         self.pending_home = False
-        self._home_hits.clear()
+        self.last_redirect_at = None
         await websocket.send(json.dumps({
             "type": "subscribe", "id": "power", "uri": POWER_URI, "payload": {},
         }))
@@ -198,12 +195,9 @@ class HomeWatcher:
 
         if app_id not in self.config.home_app_ids:
             self.pending_home = False
-            if self.escaped:
-                self.escaped = False
-                self._home_hits.clear()
             return
 
-        if self.escaped or app_id == self.config.target_app_id or self._is_screensaver(app_id):
+        if app_id == self.config.target_app_id or self._is_screensaver(app_id):
             self.pending_home = False
             return
         if self._tv_is_not_active():
@@ -212,15 +206,8 @@ class HomeWatcher:
         self.pending_home = False
 
         now = time.monotonic()
-        if self._home_hits and now - self._home_hits[-1] < HOME_EVENT_DEBOUNCE_SEC:
+        if self.last_redirect_at is not None and now - self.last_redirect_at < REDIRECT_DEBOUNCE_SEC:
             return
-        self._home_hits = [hit for hit in self._home_hits if now - hit <= self.config.escape_window_sec]
-        self._home_hits.append(now)
-        if len(self._home_hits) >= 2:
-            self.escaped = True
-            LOG.info("event=escape tv=%s foreground=%s", self.config.tv_ip, app_id)
-            return
-
         self._request_id += 1
         request_id = f"homewatch-launch-{self._request_id}"
         await websocket.send(json.dumps({
@@ -229,6 +216,7 @@ class HomeWatcher:
             "uri": LAUNCH_URI,
             "payload": {"id": self.config.target_app_id},
         }))
+        self.last_redirect_at = now
         LOG.info("event=redirect tv=%s from=%s target=%s", self.config.tv_ip, app_id, self.config.target_app_id)
 
     def _is_screensaver(self, app_id: str) -> bool:
@@ -300,7 +288,6 @@ def config_from_env() -> WatchConfig:
         target_app_id=os.environ.get("TARGET_APP_ID", "com.omarchytv.home").strip(),
         home_app_ids=_csv_set(os.environ.get("HOME_APP_IDS"), DEFAULT_HOME_APP_IDS),
         screensaver_app_ids=_csv_set(os.environ.get("SCREENSAVER_APP_IDS"), DEFAULT_SCREENSAVER_APP_IDS),
-        escape_window_sec=float(os.environ.get("ESCAPE_WINDOW_SEC", "3")),
         state_file=Path(os.environ.get("STATE_FILE", "/data/client-key.json")),
         uri=os.environ.get("SSAP_URL", "").strip() or None,
     )

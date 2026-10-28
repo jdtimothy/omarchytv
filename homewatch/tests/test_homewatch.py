@@ -83,7 +83,6 @@ class HomeWatcherIntegrationTests(unittest.IsolatedAsyncioTestCase):
             target_app_id="com.omarchytv.home",
             home_app_ids=frozenset({"com.webos.app.home", "com.webos.launcher"}),
             screensaver_app_ids=frozenset({"com.webos.app.screensaver"}),
-            escape_window_sec=3.0,
             state_file=self.state_file,
             uri=f"ws://127.0.0.1:{self.port}",
             reconnect_initial_sec=0.01,
@@ -125,7 +124,7 @@ class HomeWatcherIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.fake.launches, [launch])
         self.assertEqual(json.loads(self.state_file.read_text())["client-key"], "fake-client-key")
 
-    async def test_rapid_home_foreground_flap_is_not_treated_as_double_press(self):
+    async def test_rapid_home_foreground_flap_is_debounced(self):
         await self.start_watcher()
         await self.fake.send_foreground("com.webos.app.home")
         await asyncio.wait_for(self.fake.launch_events.get(), 1)
@@ -135,27 +134,19 @@ class HomeWatcherIntegrationTests(unittest.IsolatedAsyncioTestCase):
         await self.fake.send_foreground("com.webos.app.home")
         await asyncio.sleep(0.03)
 
-        self.assertFalse(self.watcher.escaped)
         self.assertEqual(len(self.fake.launches), 1)
 
-    async def test_double_home_escapes_and_rearms_after_leaving_stock_home(self):
+    async def test_home_from_target_always_redirects(self):
         await self.start_watcher()
-
         await self.fake.send_foreground("com.webos.app.home")
         await asyncio.wait_for(self.fake.launch_events.get(), 1)
         await self.fake.send_foreground("com.omarchytv.home")
         await asyncio.sleep(1.05)
-        await self.fake.send_foreground("com.webos.app.home")
-        await asyncio.sleep(0.03)
 
-        self.assertEqual(len(self.fake.launches), 1, "second Home should leave stock LG Home visible")
-        self.assertTrue(self.watcher.escaped)
-
-        await self.fake.send_foreground("com.example.video")
         await self.fake.send_foreground("com.webos.app.home")
         launch = await asyncio.wait_for(self.fake.launch_events.get(), 1)
+
         self.assertEqual(launch, {"id": "com.omarchytv.home"})
-        self.assertFalse(self.watcher.escaped)
         self.assertEqual(len(self.fake.launches), 2)
 
     async def test_does_not_redirect_when_target_is_already_foreground(self):

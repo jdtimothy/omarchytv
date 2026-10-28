@@ -9,7 +9,6 @@ services:
       TARGET_APP_ID: "${TARGET_APP_ID:-com.omarchytv.home}"
       HOME_APP_IDS: "${HOME_APP_IDS:-com.webos.app.home,com.webos.launcher}"
       SCREENSAVER_APP_IDS: "${SCREENSAVER_APP_IDS:-com.webos.app.screensaver,com.webos.screensaver}"
-      ESCAPE_WINDOW_SEC: "${ESCAPE_WINDOW_SEC:-3}"
       SSAP_URL: "${SSAP_URL:-}"
       STATE_FILE: /data/client-key.json
       PUID: "${PUID:-1000}"

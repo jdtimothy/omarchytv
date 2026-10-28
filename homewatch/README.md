@@ -7,7 +7,7 @@ This is an opt-in convenience layer, not a Home-button replacement inside webOS.
 ## What to expect
 
 - Press **Home** once from another app: the watcher launches OmarchyTV when LG Home becomes foreground.
-- Press **Home** again **at least one second, but less than three seconds, after the first Home surface**: the watcher treats that as an escape request, leaves stock LG Home visible, and stays out of the way until foreground leaves LG Home. It ignores sub-second Home/app flaps so one press doesn't accidentally trigger the escape hatch; it then re-arms.
+- Home always redirects to OmarchyTV when LG Home becomes foreground. There is no double-Home escape; stop the watcher to return to stock LG Home.
 - It does not redirect when OmarchyTV is already foreground, when the power-state subscription says the TV is not active, or while the screensaver is reported. Duplicate foreground notifications are ignored.
 - It reconnects with exponential backoff after the TV or network returns. Pairing's SSAP `client-key` is stored in the configured state file and reused after restarts and TV power cycles.
 - The host must stay awake and be on the same LAN/subnet as the TV. A laptop that sleeps only redirects Home while it is awake and at home.
@@ -85,14 +85,13 @@ sudo /opt/omarchytv-homewatch/.venv/bin/pip install -r /opt/omarchytv-homewatch/
 sudo chown -R root:root /opt/omarchytv-homewatch
 ```
 
-Create `/etc/omarchytv-homewatch.env` with at least the TV address and any watcher variables you need (for example `TARGET_APP_ID`, `HOME_APP_IDS`, `SCREENSAVER_APP_IDS`, `ESCAPE_WINDOW_SEC`, or `SSAP_URL`). The unit sets `STATE_FILE` under `/var/lib`; Docker-only `DATA_DIR`, `PUID`, and `PGID` are not used by systemd.
+Create `/etc/omarchytv-homewatch.env` with at least the TV address and any watcher variables you need (for example `TARGET_APP_ID`, `HOME_APP_IDS`, `SCREENSAVER_APP_IDS`, or `SSAP_URL`). The unit sets `STATE_FILE` under `/var/lib`; Docker-only `DATA_DIR`, `PUID`, and `PGID` are not used by systemd.
 
 ```ini
 TV_IP=192.168.1.50
 TARGET_APP_ID=com.omarchytv.home
 HOME_APP_IDS=com.webos.app.home,com.webos.launcher
 SCREENSAVER_APP_IDS=com.webos.app.screensaver,com.webos.screensaver
-ESCAPE_WINDOW_SEC=3
 ```
 
 Install the included unit, then enable and start it:
@@ -127,13 +126,12 @@ sudo systemctl disable --now omarchytv-homewatch.service
 | `TARGET_APP_ID` | `com.omarchytv.home` | App launched when LG Home surfaces. |
 | `HOME_APP_IDS` | `com.webos.app.home,com.webos.launcher` | Comma-separated foreground app ids treated as LG Home. |
 | `SCREENSAVER_APP_IDS` | `com.webos.app.screensaver,com.webos.screensaver` | Comma-separated screensaver app ids to ignore. Power-state detection also suppresses redirects. |
-| `ESCAPE_WINDOW_SEC` | `3` | Time window for the second-Home escape. |
 | `STATE_FILE` | `/data/client-key.json` | Local JSON file used to persist the SSAP pairing key. |
 | `SSAP_URL` | automatic | Optionally pin a full `wss://host:3001` or `ws://host:3000` URL. |
 
 ## Tests
 
-The unit/integration tests run an in-process fake SSAP WebSocket server and cover Home redirection, double-Home escape and re-arm, no redirect when OmarchyTV is already foreground, screensaver suppression, and reconnect after a dropped socket.
+The unit/integration tests run an in-process fake SSAP WebSocket server and cover redirects on repeated Home events, rapid-event debounce, no redirect when OmarchyTV is already foreground, screensaver suppression, and reconnect after a dropped socket.
 
 ```bash
 python3 -m unittest discover -s tests -v

@@ -25,7 +25,7 @@ Once OmarchyTV is installed, open it on your LG TV and **long-press the `0` (or 
 
 ## Optional: make OmarchyTV act like the home screen
 
-Unrooted webOS still sends the remote's `Home` button to LG Home. An external LAN-side watcher can detect LG Home and relaunch OmarchyTV, with a double-Home escape hatch. See the [OmarchyTV Home watcher](../homewatch/README.md) for Docker Compose (UGREEN NAS/Synology-style) and Raspberry Pi systemd setup. The companion runs off-TV; stopping it restores stock behavior.
+Unrooted webOS still sends the remote's `Home` button to LG Home. An external LAN-side watcher can detect LG Home and relaunch OmarchyTV; it continuously redirects Home while running, with no double-Home escape. See the [OmarchyTV Home watcher](../homewatch/README.md) for Docker Compose (UGREEN NAS/Synology-style) and Raspberry Pi systemd setup. The companion runs off-TV; stopping it restores stock behavior.
 
 ---
 
