@@ -195,6 +195,7 @@ class HomeWatcher:
 
         if app_id not in self.config.home_app_ids:
             self.pending_home = False
+            self.last_redirect_at = None
             return
 
         if app_id == self.config.target_app_id or self._is_screensaver(app_id):
