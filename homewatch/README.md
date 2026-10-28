@@ -25,16 +25,13 @@ The watcher registers through LG's SSAP remote-control WebSocket and asks for a 
 - **The watcher does not depend on Developer Mode being enabled.** Keep Developer Mode active because your existing OmarchyTV `.ipk` was installed through it; that app's availability is separate from SSAP.
 - The watcher itself does **not** use the Developer Mode Key Server, its SSH passphrase, port `9922`, `ares-cli`, or an SSH key. It uses SSAP on port `3001` (newer sets) or `3000` (legacy sets) and its own on-TV pairing prompt.
 - On first start, keep the TV powered on, start the watcher, and accept the remote-control/SSAP pairing prompt on the TV. No Key Server toggle is needed for this pairing.
+- The registration requests `READ_RUNNING_APPS`, `READ_POWER_STATE`, `CONTROL_POWER`, and `LAUNCH`. Some LG firmware requires `CONTROL_POWER` to read power state; this watcher uses that permission only for the power-state subscription and never sends power-control commands. If updating from an earlier watcher build, a fresh SSAP pairing is needed for the TV to grant the added permission.
 
 If no prompt appears or registration is rejected, confirm the TV and watcher host share the LAN, the SSAP port is reachable, and the saved state file is writable. Remove the persisted `client-key` only if you intentionally want to pair that watcher again.
 
 ## Docker Compose — UGREEN NAS / Synology-style layout
 
 This service publishes **no ports**. It makes outbound SSAP connections to the TV over one dedicated Docker bridge network. Create the expected NAS config directory, copy this `homewatch/` folder to your deployment host, then from the copied folder:
-
-```bash
-mkdir -p /volume2/docker/omarchytv-homewatch
-```
 
 ```bash
 mkdir -p /volume2/docker/omarchytv-homewatch
