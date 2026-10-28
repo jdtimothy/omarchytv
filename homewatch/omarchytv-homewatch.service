@@ -1,0 +1,25 @@
+[Unit]
+Description=OmarchyTV LG webOS Home watcher
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=homewatch
+Group=homewatch
+WorkingDirectory=/opt/omarchytv-homewatch
+EnvironmentFile=/etc/omarchytv-homewatch.env
+Environment=STATE_FILE=/var/lib/omarchytv-homewatch/client-key.json
+ExecStart=/opt/omarchytv-homewatch/.venv/bin/python /opt/omarchytv-homewatch/homewatch.py
+StateDirectory=omarchytv-homewatch
+StateDirectoryMode=0700
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/omarchytv-homewatch
+
+[Install]
+WantedBy=multi-user.target

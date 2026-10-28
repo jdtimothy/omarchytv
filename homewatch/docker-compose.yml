@@ -1,0 +1,24 @@
+services:
+  homewatch:
+    build: .
+    container_name: omarchytv-homewatch
+    restart: unless-stopped
+    user: "${PUID:-1000}:1000"
+    environment:
+      TV_IP: "${TV_IP:?TV_IP must be set in the stack environment}"
+      TARGET_APP_ID: "${TARGET_APP_ID:-com.omarchytv.home}"
+      HOME_APP_IDS: "${HOME_APP_IDS:-com.webos.app.home,com.webos.launcher}"
+      SCREENSAVER_APP_IDS: "${SCREENSAVER_APP_IDS:-com.webos.app.screensaver,com.webos.screensaver}"
+      ESCAPE_WINDOW_SEC: "${ESCAPE_WINDOW_SEC:-3}"
+      SSAP_URL: "${SSAP_URL:-}"
+      STATE_FILE: /data/client-key.json
+      PUID: "${PUID:-1000}"
+    volumes:
+      - /volume2/docker/omarchytv-homewatch:/data
+    networks:
+      - homewatch
+
+networks:
+  homewatch:
+    name: omarchytv-homewatch
+    driver: bridge

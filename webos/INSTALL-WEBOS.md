@@ -23,6 +23,10 @@ Instead, **OmarchyTV (`com.omarchytv.home`) installs as a standard webOS app** o
 **Pro Tip — Single-button access via Quick Access:**
 Once OmarchyTV is installed, open it on your LG TV and **long-press the `0` (or `1`–`9`) number button** on your Magic Remote to assign OmarchyTV to a Quick Access shortcut. From then on, holding that number key from anywhere on the TV jumps straight into OmarchyTV.
 
+## Optional: make OmarchyTV act like the home screen
+
+Unrooted webOS still sends the remote's `Home` button to LG Home. An external LAN-side watcher can detect LG Home and relaunch OmarchyTV, with a double-Home escape hatch. See the [OmarchyTV Home watcher](../homewatch/README.md) for Docker Compose (UGREEN NAS/Synology-style) and Raspberry Pi systemd setup. The companion runs off-TV; stopping it restores stock behavior.
+
 ---
 
 ## Method A — Easiest GUI Install (webOS Dev Manager on PC / Mac / Linux)
