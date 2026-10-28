@@ -108,6 +108,13 @@ class HomeWatcherIntegrationTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(self.fake.power_subscriptions.get(), 1)
         await asyncio.sleep(0.01)
 
+    async def test_registration_requests_power_status_control_permission(self):
+        await self.start_watcher()
+
+        permissions = self.fake.registrations[0]["manifest"]["permissions"]
+        self.assertIn("READ_POWER_STATE", permissions)
+        self.assertIn("CONTROL_POWER", permissions)
+
     async def test_redirects_when_lg_home_becomes_foreground(self):
         await self.start_watcher()
 

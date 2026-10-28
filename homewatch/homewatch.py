@@ -95,7 +95,7 @@ class HomeWatcher:
             "manifest": {
                 "manifestVersion": 1,
                 "appVersion": "1.0",
-                "permissions": ["READ_RUNNING_APPS", "READ_POWER_STATE", "LAUNCH"],
+                "permissions": ["READ_RUNNING_APPS", "READ_POWER_STATE", "CONTROL_POWER", "LAUNCH"],
             },
         }
         if self.client_key:
@@ -174,7 +174,12 @@ class HomeWatcher:
             message = self._decode_message(raw)
             message_id = message.get("id")
             payload = message.get("payload") or {}
-            if message_id == "power":
+            if message.get("type") == "error" and message_id in {"power", "foreground"}:
+                LOG.warning(
+                    "event=subscription_error tv=%s subscription=%s error=%s",
+                    self.config.tv_ip, message_id, message.get("error", "unknown error"),
+                )
+            elif message_id == "power":
                 self.power_state = self._power_value(payload)
                 if self.pending_home and not self._tv_is_not_active() and self.current_app_id:
                     self.pending_home = False
