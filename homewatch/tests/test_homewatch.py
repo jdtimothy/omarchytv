@@ -125,12 +125,26 @@ class HomeWatcherIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.fake.launches, [launch])
         self.assertEqual(json.loads(self.state_file.read_text())["client-key"], "fake-client-key")
 
+    async def test_rapid_home_foreground_flap_is_not_treated_as_double_press(self):
+        await self.start_watcher()
+        await self.fake.send_foreground("com.webos.app.home")
+        await asyncio.wait_for(self.fake.launch_events.get(), 1)
+        await self.fake.send_foreground("com.omarchytv.home")
+        await asyncio.sleep(0.02)
+
+        await self.fake.send_foreground("com.webos.app.home")
+        await asyncio.sleep(0.03)
+
+        self.assertFalse(self.watcher.escaped)
+        self.assertEqual(len(self.fake.launches), 1)
+
     async def test_double_home_escapes_and_rearms_after_leaving_stock_home(self):
         await self.start_watcher()
 
         await self.fake.send_foreground("com.webos.app.home")
         await asyncio.wait_for(self.fake.launch_events.get(), 1)
         await self.fake.send_foreground("com.omarchytv.home")
+        await asyncio.sleep(1.05)
         await self.fake.send_foreground("com.webos.app.home")
         await asyncio.sleep(0.03)
 

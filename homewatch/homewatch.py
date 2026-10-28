@@ -21,6 +21,7 @@ POWER_URI = "ssap://com.webos.service.tvpower/power/getPowerState"
 LAUNCH_URI = "ssap://system.launcher/launch"
 DEFAULT_HOME_APP_IDS = frozenset({"com.webos.app.home", "com.webos.launcher"})
 DEFAULT_SCREENSAVER_APP_IDS = frozenset({"com.webos.app.screensaver", "com.webos.screensaver"})
+HOME_EVENT_DEBOUNCE_SEC = 1.0
 LOG = logging.getLogger("homewatch")
 
 
@@ -211,6 +212,8 @@ class HomeWatcher:
         self.pending_home = False
 
         now = time.monotonic()
+        if self._home_hits and now - self._home_hits[-1] < HOME_EVENT_DEBOUNCE_SEC:
+            return
         self._home_hits = [hit for hit in self._home_hits if now - hit <= self.config.escape_window_sec]
         self._home_hits.append(now)
         if len(self._home_hits) >= 2:

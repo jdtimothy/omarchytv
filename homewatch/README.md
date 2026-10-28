@@ -7,7 +7,7 @@ This is an opt-in convenience layer, not a Home-button replacement inside webOS.
 ## What to expect
 
 - Press **Home** once from another app: the watcher launches OmarchyTV when LG Home becomes foreground.
-- Press **Home** again within three seconds: the watcher treats that as an escape request, leaves stock LG Home visible, and stays out of the way until foreground leaves LG Home. It then re-arms.
+- Press **Home** again **at least one second, but less than three seconds, after the first Home surface**: the watcher treats that as an escape request, leaves stock LG Home visible, and stays out of the way until foreground leaves LG Home. It ignores sub-second Home/app flaps so one press doesn't accidentally trigger the escape hatch; it then re-arms.
 - It does not redirect when OmarchyTV is already foreground, when the power-state subscription says the TV is not active, or while the screensaver is reported. Duplicate foreground notifications are ignored.
 - It reconnects with exponential backoff after the TV or network returns. Pairing's SSAP `client-key` is stored in the configured state file and reused after restarts and TV power cycles.
 - The host must stay awake and be on the same LAN/subnet as the TV. A laptop that sleeps only redirects Home while it is awake and at home.
