@@ -135,6 +135,8 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     saverShowClock: false,
     wallpaperIntro: true,
     wallpaperLoop: false,   // v2.14 "Always-animated wallpaper": loop the intro while Home is on screen
+    campfireBg: false,      // OmaFire campfire (Wes Grimes, MIT) full screen behind Home, see campfire.js
+    campfireSound: false,   // its crackle; off by default like OmaFire's own Sound button
     antiBurnIn: true,
     offIdleMin: 0,
     offMode: "screen",
@@ -345,6 +347,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
   }
   applyTextScale();
 
+  var campfire = null;   // OmarchyCampfire instance, made on first use (campfire.js)
   function applyTheme() {
     var t = currentThemeObj();
     var r = document.documentElement.style;
@@ -390,6 +393,18 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       } else {
         try { wv.pause(); } catch (e) {}
         wv.style.display = "none";
+      }
+    }
+    var fc = document.getElementById("wallpaper-fire");
+    if (fc && window.OmarchyCampfire && window.OmaFire) {
+      if (cfg.campfireBg) {
+        if (!campfire) { try { campfire = window.OmarchyCampfire.create(fc); } catch (e) { campfire = null; } }
+        fc.style.display = campfire ? "block" : "none";
+        if (campfire && wv) { try { wv.pause(); } catch (e) {} wv.style.display = "none"; }   // the fire replaces the intro clip
+        if (campfire) campfire.setSound(!!cfg.campfireSound);
+      } else {
+        fc.style.display = "none";
+        if (campfire) { campfire.setSound(false); campfire.setPlaying(false); }
       }
     }
     wallpaperLoopTick();
@@ -1298,6 +1313,17 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       { label: "Always-animated wallpaper", right: cfg.wallpaperLoop ? "on" : "off", act: function () {
         cfg.wallpaperLoop = !cfg.wallpaperLoop; saveCfg(); applyTheme(); openAllSettingsModal();
       } },
+      { label: "Campfire background (OmaFire)", right: cfg.campfireBg ? "on" : "off", act: function () {
+        cfg.campfireBg = !cfg.campfireBg; saveCfg(); applyTheme(); openAllSettingsModal();
+      } },
+      { label: "Campfire sound", right: cfg.campfireBg ? (cfg.campfireSound ? "on" : "off") : "off (fire off)", act: function () {
+        if (!cfg.campfireBg) { showToast("Turn on the campfire background first"); return; }
+        cfg.campfireSound = !cfg.campfireSound; saveCfg(); applyTheme(); openAllSettingsModal();
+      } },
+      { label: "Campfire: throw on a log", right: campfire && cfg.campfireBg ? campfire.status().label : "", act: function () {
+        if (!campfire || !cfg.campfireBg) { showToast("Turn on the campfire background first"); return; }
+        showToast(campfire.addLog());
+      } },
       { label: "Wallpaper dimming", right: Math.round((cfg.wallpaperDim || 0) * 100) + "%", act: function () {
         var d = [0, 0.25, 0.5];
         cfg.wallpaperDim = d[(d.indexOf(cfg.wallpaperDim) + 1) % d.length];
@@ -1552,10 +1578,14 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
   // v2.14 Always-animated wallpaper: pause the loop behind Cinemarchy, the screensaver or another app; resume on Home.
   function wallpaperLoopTick() {
     var wv = document.getElementById("wallpaper-video"), L = window.OmarchyWpLoop;
-    if (!wv || !L || !cfg.wallpaperLoop || wv.style.display !== "block") return;
-    var play = L.shouldPlay({ loop: true, hidden: document.hidden,
+    if (!L) return;
+    var away = { hidden: document.hidden,
       saver: document.getElementById("saver-overlay").className === "active",
-      cinemarchy: !!(state && state.modalOpen && state.cineTab >= 0) });
+      cinemarchy: !!(state && state.modalOpen && state.cineTab >= 0) };
+    // The campfire animates whenever it is the background (it has no "play once" mode) and pauses by the same rule.
+    if (campfire) campfire.setPlaying(!!cfg.campfireBg && L.shouldPlay({ loop: true, hidden: away.hidden, saver: away.saver, cinemarchy: away.cinemarchy }));
+    if (!wv || !cfg.wallpaperLoop || wv.style.display !== "block") return;
+    var play = L.shouldPlay({ loop: true, hidden: away.hidden, saver: away.saver, cinemarchy: away.cinemarchy });
     try { if (play && wv.paused) wv.play().catch(function () {}); else if (!play && !wv.paused) wv.pause(); } catch (e) {}
   }
   setInterval(wallpaperLoopTick, 1000);

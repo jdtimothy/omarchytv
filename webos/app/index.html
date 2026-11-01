@@ -745,6 +745,8 @@ html, body {
 <div id="stage">
   <div id="wallpaper-layer"></div>
   <video id="wallpaper-video" muted playsinline style="position:absolute;top:0;left:0;width:1920px;height:1080px;object-fit:cover;z-index:0;display:none;pointer-events:none;"></video>
+  <!-- OmaFire campfire (campfire.js): 360x240 pixel art scaled to cover 1920 wide, 100 px cropped top and bottom -->
+  <canvas id="wallpaper-fire" width="360" height="240" style="position:absolute;left:0;top:-100px;width:1920px;height:1280px;image-rendering:-webkit-optimize-contrast;image-rendering:pixelated;z-index:0;display:none;pointer-events:none;"></canvas>
   <div id="wallpaper-dim"></div>
 
   <!-- Top Waybar -->
@@ -974,6 +976,9 @@ html, body {
 <script src="hooks.js"></script>
 <script src="lights.js"></script>
 <script src="wploop.js"></script>
+<script src="vendor/omafire/fire.js"></script>
+<script src="vendor/omafire/art.js"></script>
+<script src="campfire.js"></script>
 <script src="data.js"></script>
 <script src="dhh.js"></script>
 <script src="geo.js"></script>

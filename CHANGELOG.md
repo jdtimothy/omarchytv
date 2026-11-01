@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **Campfire background (LG webOS / Samsung Tizen, testing).** Wes Grimes' [OmaFire](https://github.com/wesleygrimes/omafire) (MIT) can now be the home screen background: **Settings > Campfire background (OmaFire)**. His engine (`fire.js`) runs unchanged and draws 360x240 pixel art at 30 fps. It is zoomed to fill the screen (5.33x, 100 px cut from the top and the bottom of the 1080p stage) with hard pixel edges, so it stays sharp at 4K too. As a background it keeps burning (a log goes on when fuel drops below 32%) and pauses behind apps, Cinemarchy and the screensaver. **Campfire sound** turns on his crackle (off by default), and **Campfire: throw on a log** adds a log. Android TV is not done yet.
+
 ## [2.13.8] — 2026-10-31 (`versionCode 25`; webOS 2.13.8, Tizen 2.13.8)
 
 Final 2.13.8 release for Android TV, LG webOS and Samsung Tizen. It is the `2.13.8-testing2` build that I tested on my Sony BRAVIA, with only the version number changed.
